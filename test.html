@@ -1,0 +1,114 @@
+<canvas width="800" height="600"></canvas>
+<button id="PoligonoBTN">Novo Poligono</button>
+<button id="CorBTN">Selecionar Cor</button>
+<button id="DesenhaBTN">Desenhar Poligono</button>
+<input type="color" id="colorPolBTN" value="#99c1f1">
+
+<script>
+
+    var tela = document.querySelector('canvas');
+    var pincel = tela.getContext('2d');
+    var cor = '#99c1f1';
+
+    pincel.fillStyle = 'grey';
+    pincel.fillRect(0, 0, 800, 600);
+
+    // Botões
+    const PoligonoBTN = document.getElementById('PoligonoBTN');
+    const ColorPol = document.getElementById('colorPolBTN');
+
+    PoligonoBTN.addEventListener('click', function() {
+        pincel.clearRect(0, 0, 800, 600);
+
+        pincel.fillStyle = 'grey';
+        pincel.fillRect(0, 0, 800, 600);
+    });
+
+    // Evento para capturar a cor do polígono
+    ColorPol.addEventListener('input', (event) => {
+        cor = event.target.value;
+        console.log(cor)
+    });
+
+    let pontos = [];
+
+    function desenhaCirculo(evento) {
+        var x = evento.pageX - tela.offsetLeft;
+        var y = evento.pageY - tela.offsetTop;
+
+        pontos.push({x, y});
+
+        pincel.fillStyle = 'blue';
+        pincel.beginPath();
+        pincel.arc(x, y, 5, 0, 2 * Math.PI);
+        pincel.fill();
+        console.log(`Ponto: (${x}, ${y})`);
+    }
+
+    function tamanhoPol(pontos) { // Função para calular o maior e menor coordenada de y do polígono
+        let menor = pontos[0].y;
+        let maior = pontos[0].y;
+
+        for (const p of pontos) { // Todos os pontos presentes na lista
+            if (p.y < menor) menor = p.y;
+            if (p.y > maior) maior = p.y;
+        }
+
+        return {menor, maior}
+    }
+
+    tela.onclick = desenhaCirculo;
+
+    const DesenhaBTN = document.getElementById('DesenhaBTN');
+    DesenhaBTN.addEventListener('click', function() {
+        if (pontos.lenght < 3) return;
+
+        pincel.beginPath();
+        pincel.moveTo(pontos[0].x, pontos[0].y);
+
+        const {maior, menor} = tamanhoPol(pontos); // Chama a função tamanhoPol
+
+        //console.log("Ponto com menor y:", menor);
+        //console.log("Ponto com maior y:", maior);
+
+        // Problema
+        for (let i = 1; i < pontos.length; i++) {
+            pincel.lineTo(pontos[i].x, pontos[i].y);
+        }
+        
+        pincel.lineTo(pontos[0].x, pontos[0].y);
+        pincel.strokeStyle = 'black';
+        pincel.lineWidth = 3;
+        pincel.stroke();
+
+        // Interpolação Incremental
+        let arestas = [];
+        for (let i = 0; i < pontos.length; i++) {
+            const p1 = pontos[i];
+            const p2 = pontos[(i+1) % pontos.length]; // para garantir que não ultapasse o último ponto
+            //console.log(p1, p2);
+
+            if(p1 == p2) continue; // se a aresta é horizontal (ignora)
+
+            let yMin = Math.min(p1.y, p2.y);
+            let yMax = Math.max(p1.y, p2.y);
+
+            let x = 0;
+            if(p1.y < p2.y){ // pegamos o menor x da aresta (onde começa a aresta)
+                x = p1.y;
+            } else{
+                x = p2.y;
+            }
+
+            let deltaX = (p2.x - p1.x) / (p2.y - p1.y); // taxa de variação incremental
+
+        };
+
+        pincel.strokeStyle = cor; // Pinta o polígono com a cor anteriormente selecionada
+        pincel.lineWidth = 1;
+
+        pontos = [];
+
+    });
+
+</script>
