@@ -2,11 +2,26 @@
 <button id="PoligonoBTN">Novo Poligono</button>
 <button id="CorBTN">Selecionar Cor</button>
 <button id="DesenhaBTN">Desenhar Poligono</button>
+<div class="quadroCores"></div>
 <input type="color" id="colorPolBTN" value="#99c1f1">
+
+<style>
+    .quadroCores {
+        width: '100px';
+        height: '100px';
+        background-color: lightblue;
+    }
+
+    .tela {
+        position: absolute;
+        left: '100px';
+        top: '100px';
+    }
+</style>
 
 <script>
 
-    var tela = document.querySelector('canvas');
+    tela = document.querySelector('canvas');
     var pincel = tela.getContext('2d');
     var cor = '#99c1f1';
 
@@ -14,6 +29,7 @@
     pincel.fillRect(0, 0, 800, 600);
 
     // Botões
+    // criar conteiner de botoes para alinhar com o quadro
     const PoligonoBTN = document.getElementById('PoligonoBTN');
     const ColorPol = document.getElementById('colorPolBTN');
 
@@ -45,7 +61,7 @@
         console.log(`Ponto: (${x}, ${y})`);
     }
 
-    function tamanhoPol(pontos) { // Função para calular o maior e menor coordenada de y do polígono
+    function tamanhoPol(pontos) { // Função para calular a maior e menor coordenada de y do polígono
         let menor = pontos[0].y;
         let maior = pontos[0].y;
 
@@ -58,7 +74,7 @@
     }
 
     tela.onclick = desenhaCirculo;
-
+    
     const DesenhaBTN = document.getElementById('DesenhaBTN');
     DesenhaBTN.addEventListener('click', function() {
         if (pontos.lenght < 3) return;
@@ -71,7 +87,6 @@
         //console.log("Ponto com menor y:", menor);
         //console.log("Ponto com maior y:", maior);
 
-        // Problema
         for (let i = 1; i < pontos.length; i++) {
             pincel.lineTo(pontos[i].x, pontos[i].y);
         }
@@ -81,17 +96,24 @@
         pincel.lineWidth = 3;
         pincel.stroke();
 
+        //let listaIntersecoes = []
         // Interpolação Incremental
-        let arestas = [];
+
+        let listaScanline = []; // cada casa do vetor é corresponde a uma coordenada y, qual terá uma outra lista com os pontos incidentes a serem desenhado
+        for (let i = menor; i < maior; i++){
+            listaScanline[i] = [];
+        }
+
         for (let i = 0; i < pontos.length; i++) {
             const p1 = pontos[i];
             const p2 = pontos[(i+1) % pontos.length]; // para garantir que não ultapasse o último ponto
             //console.log(p1, p2);
 
-            if(p1 == p2) continue; // se a aresta é horizontal (ignora)
+            if(p1.y == p2.y) continue; // se a aresta é horizontal (ignora)
+            // nn era pra ser p1.x == p2.x ?
 
-            let yMin = Math.min(p1.y, p2.y);
-            let yMax = Math.max(p1.y, p2.y);
+            let yMin = Math.min(p1.y, p2.y);  // coordenada y do primeiro ponto desenhado
+            let yMax = Math.max(p1.y, p2.y);  // coordenada y do segundo ponto desenhado
 
             let x = 0;
             if(p1.y < p2.y){ // pegamos o menor x da aresta (onde começa a aresta)
@@ -100,9 +122,33 @@
                 x = p2.y;
             }
 
-            let deltaX = (p2.x - p1.x) / (p2.y - p1.y); // taxa de variação incremental
+            let deltaX = (p2.x - p1.x) / (p2.y - p1.y); // taxa de variação incremental e coeficiente angular do segmento de reta p1->p2
 
+            let k = 1;
+            
+            
+            listaScanline[yMin].push(x) // salvando o x inicial (menor entre os 2 pontos)
+            
+            for(let altura = yMin; altura <= yMax-1; altura++, k++){  // for pra calcular as intersecções entre os 2 ponto, Xnew -> X+Tx
+
+                listaScanline[altura].push(x+(deltaX*k));
+            }
+            
+            /*
+            for(let altura = yMin; altura <= yMax-1; altura++){ // log para conferir as inserções
+                console.log(altura);
+                console.log(...listaScanline[altura]);
+            }
+            */
+
+           
         };
+
+        /*
+        for (let i = menor; i < maior; i++){
+            console.log(...listaScanline[i]);
+        }
+        */
 
         pincel.strokeStyle = cor; // Pinta o polígono com a cor anteriormente selecionada
         pincel.lineWidth = 1;
