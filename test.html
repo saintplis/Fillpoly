@@ -19,11 +19,12 @@
     }
 </style>
 
+<script src="https://cdn.jsdelivr.net/npm/chroma-js@2.4.2/chroma.min.js"></script>
 <script>
-
     tela = document.querySelector('canvas');
     var pincel = tela.getContext('2d');
     var cor = '#99c1f1';
+    var rgb = [153,193,241]; 
 
     pincel.fillStyle = 'grey';
     pincel.fillRect(0, 0, 800, 600);
@@ -44,17 +45,21 @@
     ColorPol.addEventListener('input', (event) => {
         cor = event.target.value;
         console.log(cor)
+        rgb = chroma(cor).rgb();
+        console.log("cor RGB: ", rgb);
     });
 
     let pontos = [];
+    let cores = [];
 
     function desenhaCirculo(evento) {
         var x = evento.pageX - tela.offsetLeft;
         var y = evento.pageY - tela.offsetTop;
 
         pontos.push({x, y});
+        cores.push({rgb});
 
-        pincel.fillStyle = 'blue';
+        pincel.fillStyle = cor;
         pincel.beginPath();
         pincel.arc(x, y, 5, 0, 2 * Math.PI);
         pincel.fill();
@@ -77,7 +82,7 @@
     
     const DesenhaBTN = document.getElementById('DesenhaBTN');
     DesenhaBTN.addEventListener('click', function() {
-        if (pontos.lenght < 3) return;
+        if (pontos.length < 3) return;
 
         pincel.beginPath();
         pincel.moveTo(pontos[0].x, pontos[0].y);
@@ -93,7 +98,7 @@
         
         pincel.lineTo(pontos[0].x, pontos[0].y);
         pincel.strokeStyle = 'black';
-        pincel.lineWidth = 3;
+        pincel.lineWidth = 2;
         pincel.stroke();
 
         //let listaIntersecoes = []
@@ -117,9 +122,9 @@
 
             let x = 0;
             if(p1.y < p2.y){ // pegamos o menor x da aresta (onde começa a aresta)
-                x = p1.y;
+                x = p1.x;
             } else{
-                x = p2.y;
+                x = p2.x;
             }
 
             let deltaX = (p2.x - p1.x) / (p2.y - p1.y); // taxa de variação incremental e coeficiente angular do segmento de reta p1->p2
@@ -129,8 +134,7 @@
             
             listaScanline[yMin].push(x) // salvando o x inicial (menor entre os 2 pontos)
             
-            for(let altura = yMin; altura <= yMax-1; altura++, k++){  // for pra calcular as intersecções entre os 2 ponto, Xnew -> X+Tx
-
+            for(let altura = yMin + 1; altura <= yMax-1; altura++, k++){  // for pra calcular as intersecções entre os 2 ponto, Xnew -> X+Tx
                 listaScanline[altura].push(x+(deltaX*k));
             }
             
@@ -140,15 +144,25 @@
                 console.log(...listaScanline[altura]);
             }
             */
-
-           
         };
 
-        /*
+        pincel.strokeStyle = cor;
+        pincel.lineWidth = 1;
+
+        // Ordena a scanline
         for (let i = menor; i < maior; i++){
-            console.log(...listaScanline[i]);
+            listaScanline[i].sort();
+            //console.log(...listaScanline[i]);
+            for(let j = 0; j < listaScanline[i].length; j+=2){
+                let x1 = listaScanline[i][j];
+                let x2 = listaScanline[i][j+1];
+                pincel.beginPath();
+                pincel.moveTo(x1, i);
+                pincel.lineTo(x2, i);
+                pincel.stroke();
+                //console.log("x1 = ", x1, "x2 = ", x2);
+            }
         }
-        */
 
         pincel.strokeStyle = cor; // Pinta o polígono com a cor anteriormente selecionada
         pincel.lineWidth = 1;
