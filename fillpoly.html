@@ -1,0 +1,308 @@
+<div class="container">
+    <canvas width="800" height="600"></canvas>
+
+    <div class="quadro">
+        <h3>Instruções</h3>
+        <ul>
+            <li>Clique para marcar os pontos do polígono.</li>
+            <li>Use "Selecionar Cor" para escolher a cor das linhas.</li>
+            <li>Pressione "Desenhar Polígono" para finalizar.</li>
+            <li>Pressione "Novo Polígono" para limpar a tela.</li>
+        </ul>
+    </div>
+
+    <div class="botoes">
+        <button id="PoligonoBTN">Novo Polígono</button>
+        <input type="color" id="colorPolBTN" value="#99c1f1">
+        <button id="DesenhaBTN">Desenhar Polígono</button>
+    </div>
+</div>
+
+<style>
+    body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #20232a;
+    }
+
+    canvas {
+        box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
+        border-radius: 8px;
+    }
+
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .quadro {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 250px;
+        background-color: rgba(233, 233, 233, 0.822);
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 15px;
+        font-size: 14px;
+        color: #333;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        z-index: 1000; 
+    }
+
+    .quadro h3 {
+        margin-top: 0;
+        font-size: 16px;
+        color: #444;
+    }
+
+    .quadro ul {
+        padding-left: 20px;
+        margin: 0;
+    }
+
+    .botoes {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        gap: 1vh;
+        margin-top: 1vh;
+    }
+
+    button {
+        width: 180px;
+        height: 50px;
+        font-size: 18px;
+        background-color: rgb(255, 166, 32);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        cursor: pointer;
+    }
+
+    button:hover{
+        background-color: rgb(216, 140, 0);
+    }
+
+    #colorPolBTN {
+        border: none;
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        padding: 0;
+        border-radius: 50%;
+        overflow: hidden;
+    }
+
+    #colorPolBTN::-webkit-color-swatch {
+        border: none;
+        border-radius: 50%;
+    }
+    #colorPolBTN::-moz-color-swatch {
+        border: none;
+        border-radius: 50%;
+    }
+
+    button, #colorPolBTN {
+        transition: transform 0.2s, background-color 0.2s;
+    }
+
+    button:hover, #colorPolBTN:hover {
+        transform: scale(1.05);
+    }
+
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chroma-js@2.4.2/chroma.min.js"></script>
+<script>
+    tela = document.querySelector('canvas');
+    var pincel = tela.getContext('2d');
+    var cor = '#99c1f1';
+    var rgb = [153,193,241]; 
+
+    pincel.fillStyle = 'grey';
+    pincel.fillRect(0, 0, 800, 600);
+
+    // Botões
+    // criar conteiner de botoes para alinhar com o quadro
+    const PoligonoBTN = document.getElementById('PoligonoBTN');
+    const ColorPol = document.getElementById('colorPolBTN');
+
+    PoligonoBTN.addEventListener('click', function() {
+        pincel.clearRect(0, 0, 800, 600);
+
+        pincel.fillStyle = 'grey';
+        pincel.fillRect(0, 0, 800, 600);
+    });
+
+    // Evento para capturar a cor do polígono
+    ColorPol.addEventListener('input', (event) => {
+        cor = event.target.value;
+        //console.log(cor)
+        rgb = chroma(cor).rgb(); // converte a cor de hexadecimal para RGB
+        console.log("cor RGB: ", rgb);
+    });
+
+    let pontos = [];
+
+    function desenhaCirculo(evento) {
+        var x = evento.pageX - tela.offsetLeft;
+        var y = evento.pageY - tela.offsetTop;
+
+        pontos.push({x, y, rgb}); // adionamos ao vetor de pontos, as coordenadas de x e y e sua respectiva cor RGB
+
+        pincel.fillStyle = cor;
+        pincel.beginPath();
+        pincel.arc(x, y, 5, 0, 2 * Math.PI);
+        pincel.fill();
+        console.log(`Ponto: (${x}, ${y})`);
+    }
+
+    function tamanhoPol(pontos) { // Função para calular a maior e menor coordenada de y do polígono
+        let menor = pontos[0].y;
+        let maior = pontos[0].y;
+
+        for (const p of pontos) { // Todos os pontos presentes na lista
+            if (p.y < menor) menor = p.y;
+            if (p.y > maior) maior = p.y;
+        }
+
+        return {menor, maior}
+    }
+
+    tela.onclick = desenhaCirculo;
+    
+    const DesenhaBTN = document.getElementById('DesenhaBTN');
+    DesenhaBTN.addEventListener('click', function() {
+        if (pontos.length < 3) return; // se existir menos que 3 pontos, não há polígono
+
+        pincel.beginPath();
+        pincel.moveTo(pontos[0].x, pontos[0].y);
+
+        const {maior, menor} = tamanhoPol(pontos); // chama a função tamanhoPol para saber o menor e maior coordenada do polígono
+
+        //console.log("Ponto com menor y:", menor);
+        //console.log("Ponto com maior y:", maior);
+
+        for (let i = 1; i < pontos.length; i++) {
+            pincel.lineTo(pontos[i].x, pontos[i].y); // desenha a aresta de um ponto para outro
+        }
+        
+        pincel.lineTo(pontos[0].x, pontos[0].y); // desenha a última aresta, entre o penúltimo e o último ponto
+        pincel.strokeStyle = 'black';
+        pincel.lineWidth = 2;
+        pincel.stroke(); // mostra as arestas
+
+        //let listaIntersecoes = []
+        // Interpolação Incremental
+
+        let listaScanline = []; // cada casa do vetor é corresponde a uma coordenada y, qual terá uma outra lista com os pontos incidentes a serem desenhado
+        for (let i = menor; i < maior; i++){ // criamos todas as posições de scanline, indo do menor ponto até o maior do polígono
+            listaScanline[i] = [];
+        }
+
+        for (let i = 0; i < pontos.length; i++) { // para todos os pontos presentes no polígono
+            // os dois pontos da aresta
+            const p1 = pontos[i];
+            const p2 = pontos[(i+1) % pontos.length]; // para garantir que não ultapasse o último ponto
+            //console.log(p1, p2);
+
+            if(p1.y == p2.y) continue; // se a aresta é horizontal (ignora)
+
+            let yMin = Math.min(p1.y, p2.y);  // coordenada y do primeiro ponto desenhado
+            let yMax = Math.max(p1.y, p2.y);  // coordenada y do segundo ponto desenhado
+
+            let x = 0;
+            if(p1.y < p2.y){ // pegamos o menor x da aresta (onde começa a aresta), e o seu respectivo rgb
+                x = p1.x;
+                r = p1.rgb[0];
+                g = p1.rgb[1];
+                b = p1.rgb[2];
+            } else{
+                x = p2.x;
+                r = p2.rgb[0];
+                g = p2.rgb[1];
+                b = p2.rgb[2];
+            }
+
+            let deltaX = (p2.x - p1.x) / (p2.y - p1.y); // taxa de variação incremental e coeficiente angular do segmento de reta p1->p2
+            let deltaRGB = [];
+            // calculo de variação incremental para RGB
+            deltaRGB[0] = (p2.rgb[0] - p1.rgb[0]) / (p2.y - p1.y);
+            deltaRGB[1] = (p2.rgb[1] - p1.rgb[1]) / (p2.y - p1.y);
+            deltaRGB[2] = (p2.rgb[2] - p1.rgb[2]) / (p2.y - p1.y);
+            
+            listaScanline[yMin].push({'x': x, 'rgb': [r, g, b]}); // salvando o x inicial (menor entre os 2 pontos)
+            
+            let anteriorX = 0;
+            let anteriorTamanho = 0;
+            let anteriorRGB = [];
+
+            for(let altura = yMin + 1; altura <= yMax-1; altura++){  // for para calcular as intersecções entre os 2 pontos, Xnew -> X+Tx
+                anteriorTamanho = listaScanline[altura - 1].length - 1; // tamanho da scanline anterior para capturarmos o último x e rgb para somar com delta 
+                anteriorX = listaScanline[altura-1][anteriorTamanho].x; // o x anterior
+                //console.log(anteriorX)
+                anteriorRGB = listaScanline[altura-1][anteriorTamanho].rgb; // o rgb anterior
+                //console.log(anteriorRGB);
+                // adicionamos a scanline o respectivo ponto x e rgb com a sua variação incremental
+                listaScanline[altura].push({'x': deltaX + anteriorX, 'rgb' : [deltaRGB[0] + anteriorRGB[0], deltaRGB[1] + anteriorRGB[1], deltaRGB[2] + anteriorRGB[2]]});
+            }
+            
+            for(let altura = yMin; altura <= yMax-1; altura++){ // log para conferir as inserções
+                //console.log(altura);altura
+                //console.log(...listaScanline[altura]);
+            }
+            
+        };
+
+        pincel.strokeStyle = cor;
+        pincel.lineWidth = 1;
+
+        // x1 = ponto incial
+        // x2 = ponto final
+        // passo = número de pontos a gerar
+
+        // Ordena a scanline
+        for (let i = menor; i < maior; i++){ // pega todas as scanlines presentes no polígono
+            listaScanline[i].sort((a, b) => a.x - b.x); // ordena com base no x
+            //console.log(...listaScanline[i]);
+            for(let j = 0; j < listaScanline[i].length; j+=2){ // pega os 2 pontos ou mais da scanline
+
+                // os dois pontos x da scanline
+                let x1 = listaScanline[i][j];
+                let x2 = listaScanline[i][j+1];
+
+                deltaX = x2.x - x1.x; // variação entre x2 e x1
+                deltaR = (x2.rgb[0] - x1.rgb[0]) / deltaX; // variação de RED entre x2 e x1
+                deltaG = (x2.rgb[1] - x1.rgb[1]) / deltaX; // variação de GREEN entre x2 e x1
+                deltaB = (x2.rgb[2] - x1.rgb[2]) / deltaX; // variação de BLUE entre x2 e x1
+
+                // RGB do primeiro ponto da scanline
+                let r = x1.rgb[0];
+                let g = x1.rgb[1];
+                let b = x1.rgb[2];
+
+                // usamos round para arrendondar as coordenadas
+                for (let k = Math.round(x1.x); k <= Math.round(x2.x); k++) { // percorre pixel a pixel do primeiro ao segundo ponto da scanline
+                    // pintamos todos os pixels da scanline
+                    pincel.fillStyle = `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+                    pincel.fillRect(k, i, 1, 1);
+                    
+                    // incrementa a variação de RGB para a próxima iteração (pixel)
+                    r += deltaR;
+                    g += deltaG;
+                    b += deltaB;
+                }
+            }
+        }
+
+        pontos = [];
+
+    });
+
+</script>
